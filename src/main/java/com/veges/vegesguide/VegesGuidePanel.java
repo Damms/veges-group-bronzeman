@@ -150,9 +150,15 @@ class VegesGuidePanel extends PluginPanel
 			st.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
 			content.add(st);
 
+			boolean hide = hideCompleted();
 			for (GuideData.Item item : section.items)
 			{
-				content.add(row(b, item));
+				boolean done = item.checkable && item.id != null && isDone(b.key, item.id);
+				if (done && hide)
+				{
+					continue;
+				}
+				content.add(row(b, item, done));
 			}
 		}
 
@@ -167,7 +173,7 @@ class VegesGuidePanel extends PluginPanel
 		content.repaint();
 	}
 
-	private JPanel row(GuideData.Build b, GuideData.Item item)
+	private JPanel row(GuideData.Build b, GuideData.Item item, boolean done)
 	{
 		JPanel outer = new JPanel();
 		outer.setLayout(new BoxLayout(outer, BoxLayout.Y_AXIS));
@@ -177,6 +183,37 @@ class VegesGuidePanel extends PluginPanel
 		JPanel line = new JPanel(new BorderLayout(6, 0));
 		line.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+		JLabel label = new JLabel(done ? doneHtml(item) : fullHtml(item));
+
+		if (item.checkable && item.id != null)
+		{
+			JCheckBox cb = new JCheckBox();
+			cb.setSelected(done);
+			cb.addActionListener(e -> {
+				setDone(b.key, item.id, cb.isSelected());
+				updateProgress(b);
+				render();
+			});
+			line.add(cb, BorderLayout.WEST);
+		}
+		line.add(label, BorderLayout.CENTER);
+		line.setMaximumSize(new Dimension(Integer.MAX_VALUE, line.getPreferredSize().height));
+		outer.add(line);
+
+		// A completed quest collapses to the single done line - its description,
+		// requirements and prerequisite tree no longer matter, so omit them.
+		if (!done && item.quest != null && QuestReqs.hasPrereqs(item.quest))
+		{
+			addPrereqSection(outer, b, item.quest);
+		}
+
+		outer.setMaximumSize(new Dimension(Integer.MAX_VALUE, outer.getPreferredSize().height));
+		return outer;
+	}
+
+	// Full row: bold name, description, and the met/unmet "Requires:" line.
+	private String fullHtml(GuideData.Item item)
+	{
 		StringBuilder html = new StringBuilder("<html><body style='width:150px'>");
 		html.append("<b>").append(esc(item.name)).append("</b>");
 		if (item.desc != null && !item.desc.isEmpty())
@@ -185,29 +222,20 @@ class VegesGuidePanel extends PluginPanel
 		}
 		html.append(reqsHtml(item));
 		html.append("</body></html>");
-		JLabel label = new JLabel(html.toString());
+		return html.toString();
+	}
 
-		if (item.checkable && item.id != null)
-		{
-			JCheckBox cb = new JCheckBox();
-			cb.setSelected(isDone(b.key, item.id));
-			cb.addActionListener(e -> {
-				setDone(b.key, item.id, cb.isSelected());
-				updateProgress(b);
-			});
-			line.add(cb, BorderLayout.WEST);
-		}
-		line.add(label, BorderLayout.CENTER);
-		line.setMaximumSize(new Dimension(Integer.MAX_VALUE, line.getPreferredSize().height));
-		outer.add(line);
+	// Collapsed "done" row: a single dim, struck-through, green-ticked line.
+	private String doneHtml(GuideData.Item item)
+	{
+		return "<html><body style='width:150px'><span style='color:#6f9f6f'>"
+			+ "&#10003; <strike>" + esc(item.name) + "</strike></span></body></html>";
+	}
 
-		if (item.quest != null && QuestReqs.hasPrereqs(item.quest))
-		{
-			addPrereqSection(outer, b, item.quest);
-		}
-
-		outer.setMaximumSize(new Dimension(Integer.MAX_VALUE, outer.getPreferredSize().height));
-		return outer;
+	private boolean hideCompleted()
+	{
+		Boolean v = configManager.getConfiguration(VegesGuideConfig.GROUP, "hideCompleted", Boolean.class);
+		return Boolean.TRUE.equals(v);
 	}
 
 	private boolean showAllPrereqs()

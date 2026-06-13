@@ -28,4 +28,14 @@ public interface VegesGuideConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "hideCompleted",
+		name = "Hide completed quests",
+		description = "Hide quests entirely once they are checked off, instead of showing them as a collapsed done line"
+	)
+	default boolean hideCompleted()
+	{
+		return false;
+	}
 }
