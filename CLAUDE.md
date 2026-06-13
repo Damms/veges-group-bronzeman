@@ -9,10 +9,14 @@ quest and skill state. Built from the runelite/example-plugin template.
 - Package: `com.veges.vegesguide` · config group: `vegesguide` · plugin name:
   "Veges PK Guide" · author: `Phob`.
 - GitHub: plugin repo `https://github.com/Damms/veges-group-bronzeman` (branch
-  `master`). Submitted to the Plugin Hub via PR
-  `https://github.com/runelite/plugin-hub/pull/12581` (manifest
-  `plugins/veges-pk-guide`). To ship code changes: push to the plugin repo, then
-  bump `commit=` in that plugin-hub PR (same PR, new branch off upstream/master).
+  `master`). Submitted to the Plugin Hub via the **open** PR
+  `https://github.com/runelite/plugin-hub/pull/12582` (manifest
+  `plugins/veges-pk-guide`, from fork branch `veges-pk-guide-update`). PR #12581
+  was the original and is now closed. To ship code changes: push to the plugin
+  repo, then bump `commit=` in the open plugin-hub PR (#12582) to the new hash.
+- Five builds: `pure`, `fortydef`, `zerker`, `med` are trackable checklists
+  (checkboxes + progress bar + auto-tick); `pivot` is reference-only. Stable id
+  prefixes per build: pure=`q`, zerker=`z`, fortydef=`f`, med=`m`.
 
 ## Files
 - `VegesGuidePlugin.java` — nav button + event wiring. Subscribes to
@@ -41,3 +45,8 @@ quest and skill state. Built from the runelite/example-plugin template.
   "-Dorg.gradle.java.home=C:\Users\Jaedyn\.jdks\corretto-23.0.2"`. IntelliJ runs
   fine without the flag. The ReflectUtil InaccessibleObjectException at startup
   is benign on JDK 23.
+
+## Conventions
+- Do **not** add a `Co-Authored-By: Claude` trailer to commits or a "Generated
+  with Claude Code" footer to PRs in this project — the repo owner prefers no AI
+  attribution.
