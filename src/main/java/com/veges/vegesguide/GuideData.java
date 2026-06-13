@@ -167,7 +167,7 @@ final class GuideData
 
 	private static Build fortyDef()
 	{
-		return new Build("fortydef", "40 Def", false,
+		return new Build("fortydef", "40 Def", true,
 			summary(
 				"A pure with a touch of armour. Stops at exactly 40 Defence.",
 				"Defence 40, otherwise built like a pure. Combat ~78, just below a zerker.",
@@ -175,11 +175,30 @@ final class GuideData
 				"Melee-led with d'hide switches. Tankier than a 1 def but still aggressive. No Berserker helm.",
 				"Low zerker bracket, Edgeville single, multi-combat, NH/hybrid, LMS."
 			),
-			new Section("How to build it",
-				new Item(null, "1. No-defence quests first", "Same Phase 1-3 quests as the 1 Def Pure tab", false),
-				new Item(null, "2. Defence quests", "Nature Spirit, Dragon Slayer I, Heroes' Quest (~lvl 35)", false),
-				new Item(null, "3. Skip Daero's MM training", "Its 20k Def XP overshoots 40 - this is the key difference", false),
-				new Item(null, "4. Train to exactly 40", "Check Def XP before every quest", false)
+			new Section("Foundation",
+				new Item("f01", "Finish all 1 Def Pure combat/weapon quests", "Same no-defence base as the pure", true)
+			),
+			new Section("Defence quests (in order -> 40)",
+				new Item("f02", "Nature Spirit", "Morytania swamp; 2,000 Def XP", true, Quest.NATURE_SPIRIT),
+				new Item("f03", "Dragon Slayer I", "Rune platebody; 18,650 Def XP", true, Quest.DRAGON_SLAYER_I),
+				new Item("f04", "Heroes' Quest", "Heroes' Guild; 3,075 Def XP", true, Quest.HEROES_QUEST,
+					req(Skill.COOKING, 53), req(Skill.FISHING, 53), req(Skill.HERBLORE, 25), req(Skill.MINING, 50)),
+				new Item("f05", "Monkey Madness I", "Dragon Scimitar; DECLINE Daero's 20k Def XP training", true, Quest.MONKEY_MADNESS_I),
+				new Item("f06", "Train Defence to exactly 40", "Check Def XP before every quest; never King's Ransom", true)
+			),
+			new Section("Spellbook, gloves & gear",
+				new Item("f07", "Animal Magnetism", "Ava's Accumulator", true, Quest.ANIMAL_MAGNETISM,
+					req(Skill.SLAYER, 18), req(Skill.CRAFTING, 19), req(Skill.RANGED, 30), req(Skill.WOODCUTTING, 35)),
+				new Item("f08", "Desert Treasure I", "Ancient Magicks / Ice Barrage", true, Quest.DESERT_TREASURE_I,
+					req(Skill.MAGIC, 50), req(Skill.FIREMAKING, 50), req(Skill.THIEVING, 53), req(Skill.SLAYER, 10)),
+				new Item("f09", "Lunar Diplomacy", "Vengeance - 40 Def is the lowest build that can unlock it", true, Quest.LUNAR_DIPLOMACY,
+					req(Skill.CRAFTING, 61), req(Skill.DEFENCE, 40), req(Skill.FIREMAKING, 49), req(Skill.MAGIC, 65),
+					req(Skill.MINING, 60), req(Skill.WOODCUTTING, 55), req(Skill.HERBLORE, 5)),
+				new Item("f10", "Recipe for Disaster (full questline)", "Barrows Gloves (+12 all combat)", true, Quest.RECIPE_FOR_DISASTER,
+					req(Skill.COOKING, 70), req(Skill.AGILITY, 48), req(Skill.MINING, 50), req(Skill.FISHING, 53),
+					req(Skill.THIEVING, 53), req(Skill.HERBLORE, 25), req(Skill.MAGIC, 59), req(Skill.SMITHING, 40),
+					req(Skill.FIREMAKING, 50), req(Skill.RANGED, 40), req(Skill.CRAFTING, 40), req(Skill.FLETCHING, 10),
+					req(Skill.WOODCUTTING, 36))
 			),
 			new Section("Beyond the quests",
 				new Item(null, "Same unlocks as 1 Def Pure", "Fighter Torso, Fire Cape, Ardy Cape, Mage Arena, Void, Salve. Fighter Hat pairs with Rune armour", false)
@@ -238,7 +257,7 @@ final class GuideData
 
 	private static Build med()
 	{
-		return new Build("med", "Med - 70/75 Def", false,
+		return new Build("med", "Med - 70/75 Def", true,
 			summary(
 				"The bully of the mid-level brackets. 70-75 Defence unlocks Piety/Rigour/Augury.",
 				"70-80 Def, 60-82 Atk, 77 Prayer. Combat ~95-110. Full PvM, most lenient build to train.",
@@ -246,14 +265,37 @@ final class GuideData
 				"Prayer-boosted hybrid/tribrid. Out-tank and out-last lower builds, then spec out with Claws or AGS.",
 				"Deep wilderness, multi, hybrid/tribrid, PvM+PK. Preys on zerkers and pures."
 			),
-			new Section("How to build it",
-				new Item(null, "1. Combat-XP quests + 200 QP", "200 QP unlocks the big quests", false),
-				new Item(null, "2. Dragon Slayer I & II", "DS2 also enables Vengeance + huge content", false),
-				new Item(null, "3. Def to 70/75, then 77 Prayer", "Buy Dex + Arcane scrolls for Rigour/Augury", false),
-				new Item(null, "4. Pick Attack cap", "60 for Dragon Claws (lower cb) or 75 for AGS", false)
+			new Section("Foundation",
+				new Item("m01", "Finish all 1 Def Pure combat/weapon quests", "Reusable no-defence base", true)
 			),
-			new Section("Target stats",
-				new Item(null, "Def 70 or 75 - Str 99 - Atk 60/75", "Ranged 99 - Magic 94+ - Prayer 77 - high HP", false)
+			new Section("Core quests",
+				new Item("m02", "Dragon Slayer I", "Rune platebody; 18,650 Def XP", true, Quest.DRAGON_SLAYER_I),
+				new Item("m03", "Monkey Madness I", "Dragon Scimitar", true, Quest.MONKEY_MADNESS_I),
+				new Item("m04", "Heroes' Quest", "Heroes' Guild; 3,075 Def XP", true, Quest.HEROES_QUEST,
+					req(Skill.COOKING, 53), req(Skill.FISHING, 53), req(Skill.HERBLORE, 25), req(Skill.MINING, 50)),
+				new Item("m05", "Dragon Slayer II", "Huge content unlock; needs 200 QP", true, Quest.DRAGON_SLAYER_II,
+					req(Skill.MAGIC, 75), req(Skill.SMITHING, 70), req(Skill.MINING, 68), req(Skill.CRAFTING, 62),
+					req(Skill.AGILITY, 60), req(Skill.THIEVING, 60), req(Skill.CONSTRUCTION, 50), req(Skill.HITPOINTS, 50))
+			),
+			new Section("Spellbook, prayers & gloves",
+				new Item("m06", "Desert Treasure I", "Ancient Magicks / Ice Barrage", true, Quest.DESERT_TREASURE_I,
+					req(Skill.MAGIC, 50), req(Skill.FIREMAKING, 50), req(Skill.THIEVING, 53), req(Skill.SLAYER, 10)),
+				new Item("m07", "Lunar Diplomacy", "Vengeance", true, Quest.LUNAR_DIPLOMACY,
+					req(Skill.CRAFTING, 61), req(Skill.DEFENCE, 40), req(Skill.FIREMAKING, 49), req(Skill.MAGIC, 65),
+					req(Skill.MINING, 60), req(Skill.WOODCUTTING, 55), req(Skill.HERBLORE, 5)),
+				new Item("m08", "King's Ransom", "Unlocks Piety (then need 70 Def + 70 Prayer)", true, Quest.KINGS_RANSOM,
+					req(Skill.MAGIC, 45), req(Skill.DEFENCE, 65)),
+				new Item("m09", "Recipe for Disaster (full questline)", "Barrows Gloves (+12 all combat)", true, Quest.RECIPE_FOR_DISASTER,
+					req(Skill.COOKING, 70), req(Skill.AGILITY, 48), req(Skill.MINING, 50), req(Skill.FISHING, 53),
+					req(Skill.THIEVING, 53), req(Skill.HERBLORE, 25), req(Skill.MAGIC, 59), req(Skill.SMITHING, 40),
+					req(Skill.FIREMAKING, 50), req(Skill.RANGED, 40), req(Skill.CRAFTING, 40), req(Skill.FLETCHING, 10),
+					req(Skill.WOODCUTTING, 36)),
+				new Item("m10", "Animal Magnetism", "Ava's Accumulator (Ava's assembler after DS2)", true, Quest.ANIMAL_MAGNETISM,
+					req(Skill.SLAYER, 18), req(Skill.CRAFTING, 19), req(Skill.RANGED, 30), req(Skill.WOODCUTTING, 35))
+			),
+			new Section("Stat targets",
+				new Item("m11", "Train Defence to 70 (or 75)", "70 = Piety, Barrows armour, Rigour/Augury gear; 75 = serp, DFS, prims", true),
+				new Item("m12", "Train Prayer to 77", "Rigour & Augury via Dex + Arcane prayer scrolls", true)
 			),
 			new Section("Beyond the quests - key unlocks",
 				new Item(null, "Piety, Rigour & Augury (70 Def)", "The biggest reason to be a med", false),
