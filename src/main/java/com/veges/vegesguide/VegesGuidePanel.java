@@ -2,9 +2,16 @@ package com.veges.vegesguide;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -15,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
+import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.ui.PluginPanel;
@@ -31,6 +39,12 @@ class VegesGuidePanel extends PluginPanel
 	// client thread. Null until the first sync (e.g. before login) - reqs then
 	// render in a neutral colour rather than met/unmet.
 	private volatile Map<Skill, Integer> playerLevels;
+
+	// Snapshot of which prereq-graph quests are FINISHED. Null before login.
+	private volatile Map<Quest, Boolean> questFinished;
+
+	// Which quests' prerequisite trees are currently expanded (key build/quest).
+	private final Set<String> expanded = new HashSet<>();
 
 	VegesGuidePanel(ConfigManager configManager)
 	{
@@ -98,6 +112,12 @@ class VegesGuidePanel extends PluginPanel
 		this.playerLevels = levels;
 	}
 
+	/** Update the cached quest-completion snapshot used by the prereq trees. */
+	void setQuestStates(Map<Quest, Boolean> finished)
+	{
+		this.questFinished = finished;
+	}
+
 	private GuideData.Build current()
 	{
 		String name = (String) buildSelector.getSelectedItem();
@@ -149,11 +169,15 @@ class VegesGuidePanel extends PluginPanel
 
 	private JPanel row(GuideData.Build b, GuideData.Item item)
 	{
-		JPanel rowPanel = new JPanel(new BorderLayout(6, 0));
-		rowPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
-		rowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		JPanel outer = new JPanel();
+		outer.setLayout(new BoxLayout(outer, BoxLayout.Y_AXIS));
+		outer.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
+		outer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		StringBuilder html = new StringBuilder("<html><body style='width:170px'>");
+		JPanel line = new JPanel(new BorderLayout(6, 0));
+		line.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		StringBuilder html = new StringBuilder("<html><body style='width:150px'>");
 		html.append("<b>").append(esc(item.name)).append("</b>");
 		if (item.desc != null && !item.desc.isEmpty())
 		{
@@ -171,12 +195,197 @@ class VegesGuidePanel extends PluginPanel
 				setDone(b.key, item.id, cb.isSelected());
 				updateProgress(b);
 			});
-			rowPanel.add(cb, BorderLayout.WEST);
+			line.add(cb, BorderLayout.WEST);
 		}
-		rowPanel.add(label, BorderLayout.CENTER);
+		line.add(label, BorderLayout.CENTER);
+		line.setMaximumSize(new Dimension(Integer.MAX_VALUE, line.getPreferredSize().height));
+		outer.add(line);
 
-		rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowPanel.getPreferredSize().height));
-		return rowPanel;
+		if (item.quest != null && QuestReqs.hasPrereqs(item.quest))
+		{
+			addPrereqSection(outer, b, item.quest);
+		}
+
+		outer.setMaximumSize(new Dimension(Integer.MAX_VALUE, outer.getPreferredSize().height));
+		return outer;
+	}
+
+	private boolean showAllPrereqs()
+	{
+		Boolean v = configManager.getConfiguration(VegesGuideConfig.GROUP, "showAllPrereqs", Boolean.class);
+		return Boolean.TRUE.equals(v);
+	}
+
+	private boolean isFinished(Quest quest)
+	{
+		Map<Quest, Boolean> qf = questFinished;
+		return qf != null && Boolean.TRUE.equals(qf.get(quest));
+	}
+
+	// Adds the collapsible "Prerequisites" toggle (and the tree when expanded)
+	// beneath a quest row.
+	private void addPrereqSection(JPanel outer, GuideData.Build b, Quest quest)
+	{
+		boolean showAll = showAllPrereqs();
+		int count = countChainQuests(quest, showAll);
+		String key = b.key + "/" + quest.name();
+		boolean isExpanded = expanded.contains(key);
+
+		JLabel toggle = new JLabel();
+		toggle.setAlignmentX(Component.LEFT_ALIGNMENT);
+		toggle.setBorder(BorderFactory.createEmptyBorder(4, 22, 1, 0));
+		toggle.setFont(toggle.getFont().deriveFont(Font.BOLD, 11f));
+
+		if (!showAll && count == 0)
+		{
+			toggle.setText("<html><span style='color:#4CAF50'>&#10003; Prerequisites done</span></html>");
+			outer.add(toggle);
+			return;
+		}
+
+		String caret = isExpanded ? "&#9662;" : "&#9656;"; // down / right triangle
+		String label = showAll ? ("Prerequisites (" + count + ")") : ("Prerequisites (" + count + " left)");
+		// Pill-style highlight so the expander is easy to spot in the list.
+		toggle.setText("<html><span style='color:#1a1a1a; background-color:#c9a227'>&nbsp;"
+			+ caret + " " + label + "&nbsp;</span></html>");
+		toggle.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		toggle.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				if (isExpanded)
+				{
+					expanded.remove(key);
+				}
+				else
+				{
+					expanded.add(key);
+				}
+				render();
+			}
+		});
+		outer.add(toggle);
+
+		if (isExpanded)
+		{
+			JLabel tree = new JLabel(buildPrereqTree(quest, showAll));
+			tree.setAlignmentX(Component.LEFT_ALIGNMENT);
+			tree.setBorder(BorderFactory.createEmptyBorder(2, 22, 2, 0));
+			outer.add(tree);
+		}
+	}
+
+	// Number of distinct prerequisite quests in the chain. In "only unmet" mode
+	// this counts just the unfinished ones (finished quests prune their subtree).
+	private int countChainQuests(Quest root, boolean showAll)
+	{
+		Set<Quest> seen = EnumSet.noneOf(Quest.class);
+		countChain(root, showAll, seen);
+		return seen.size();
+	}
+
+	private void countChain(Quest quest, boolean showAll, Set<Quest> seen)
+	{
+		for (Quest p : QuestReqs.directPrereqs(quest))
+		{
+			if (seen.contains(p))
+			{
+				continue;
+			}
+			boolean finished = isFinished(p);
+			if (!showAll && finished)
+			{
+				continue;
+			}
+			seen.add(p);
+			countChain(p, showAll, seen);
+		}
+	}
+
+	private String buildPrereqTree(Quest root, boolean showAll)
+	{
+		StringBuilder sb = new StringBuilder("<html><body style='width:150px'>");
+		Set<Quest> visited = EnumSet.noneOf(Quest.class);
+		appendChildren(root, 0, showAll, visited, sb);
+		sb.append("</body></html>");
+		return sb.toString();
+	}
+
+	// Depth-first, de-duplicated across the whole tree so a shared prereq only
+	// appears once. Visual indent is capped so deep chains stay readable.
+	private void appendChildren(Quest quest, int depth, boolean showAll, Set<Quest> visited, StringBuilder sb)
+	{
+		for (Quest p : QuestReqs.directPrereqs(quest))
+		{
+			if (visited.contains(p))
+			{
+				continue;
+			}
+			boolean finished = isFinished(p);
+			if (!showAll && finished)
+			{
+				continue;
+			}
+			visited.add(p);
+
+			int indentLevels = Math.min(depth, 3);
+			StringBuilder indent = new StringBuilder();
+			for (int i = 0; i < indentLevels; i++)
+			{
+				indent.append("&nbsp;&nbsp;&nbsp;");
+			}
+			String mark = finished
+				? "<span style='color:#4CAF50'>&#10003;</span> "
+				: "<span style='color:#E25C5C'>&#10007;</span> ";
+			sb.append(indent).append(mark).append(esc(p.getName()));
+
+			String reqs = prereqReqsInline(p, showAll);
+			if (!reqs.isEmpty())
+			{
+				sb.append(" <span style='color:#9c9c9c'>(").append(reqs).append(")</span>");
+			}
+			sb.append("<br>");
+
+			appendChildren(p, depth + 1, showAll, visited, sb);
+		}
+	}
+
+	private String prereqReqsInline(Quest quest, boolean showAll)
+	{
+		List<GuideData.SkillReq> reqs = QuestReqs.reqsOf(quest);
+		if (reqs.isEmpty())
+		{
+			return "";
+		}
+		Map<Skill, Integer> levels = playerLevels;
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (GuideData.SkillReq r : reqs)
+		{
+			boolean met = levels != null && levels.getOrDefault(r.skill, 0) >= r.level;
+			if (!showAll && met)
+			{
+				continue;
+			}
+			if (!first)
+			{
+				sb.append(", ");
+			}
+			first = false;
+
+			String text = r.level + " " + skillName(r.skill);
+			if (levels == null)
+			{
+				sb.append(text);
+			}
+			else
+			{
+				sb.append("<span style='color:").append(met ? "#4CAF50" : "#E25C5C").append("'>")
+					.append(text).append("</span>");
+			}
+		}
+		return sb.toString();
 	}
 
 	private void updateProgress(GuideData.Build b)

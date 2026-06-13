@@ -22,6 +22,7 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -54,6 +55,9 @@ public class VegesGuidePlugin extends Plugin
 	// Last skill-level snapshot pushed to the panel, for change detection.
 	private Map<Skill, Integer> lastLevels;
 
+	// Last quest-completion snapshot pushed to the panel, for change detection.
+	private Map<Quest, Boolean> lastQuestFinished;
+
 	@Provides
 	VegesGuideConfig provideConfig(ConfigManager configManager)
 	{
@@ -84,6 +88,7 @@ public class VegesGuidePlugin extends Plugin
 		navButton = null;
 		syncPending = false;
 		lastLevels = null;
+		lastQuestFinished = null;
 	}
 
 	@Subscribe
@@ -108,6 +113,16 @@ public class VegesGuidePlugin extends Plugin
 	{
 		// A skill level may have changed; refresh the met/unmet requirements.
 		syncPending = true;
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		// e.g. the "show all prerequisites" toggle - rebuild the panel.
+		if (VegesGuideConfig.GROUP.equals(event.getGroup()) && panel != null)
+		{
+			SwingUtilities.invokeLater(panel::refresh);
+		}
 	}
 
 	@Subscribe
@@ -160,21 +175,37 @@ public class VegesGuidePlugin extends Plugin
 		}
 
 		Map<Skill, Integer> levels = captureLevels();
+		Map<Quest, Boolean> questFinished = captureQuestStates();
 		boolean levelsChanged = !levels.equals(lastLevels);
+		boolean questFinishedChanged = !questFinished.equals(lastQuestFinished);
 		lastLevels = levels;
+		lastQuestFinished = questFinished;
 
-		if (questsChanged || levelsChanged)
+		if (questsChanged || levelsChanged || questFinishedChanged)
 		{
-			Map<Skill, Integer> snapshot = Collections.unmodifiableMap(levels);
+			Map<Skill, Integer> levelSnapshot = Collections.unmodifiableMap(levels);
+			Map<Quest, Boolean> questSnapshot = Collections.unmodifiableMap(questFinished);
 			SwingUtilities.invokeLater(() ->
 			{
 				if (panel != null)
 				{
-					panel.setPlayerLevels(snapshot);
+					panel.setPlayerLevels(levelSnapshot);
+					panel.setQuestStates(questSnapshot);
 					panel.refresh();
 				}
 			});
 		}
+	}
+
+	// FINISHED state for every quest in the prerequisite graph, for the trees.
+	private Map<Quest, Boolean> captureQuestStates()
+	{
+		Map<Quest, Boolean> states = new EnumMap<>(Quest.class);
+		for (Quest quest : QuestReqs.allQuests())
+		{
+			states.put(quest, quest.getState(client) == QuestState.FINISHED);
+		}
+		return states;
 	}
 
 	// Real (un-boosted) skill levels, matching how quest requirements are gated.

@@ -18,4 +18,14 @@ public interface VegesGuideConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "showAllPrereqs",
+		name = "Show all prerequisites",
+		description = "In the prerequisite trees, show completed quests and met requirements too, instead of only what is still outstanding"
+	)
+	default boolean showAllPrereqs()
+	{
+		return false;
+	}
 }

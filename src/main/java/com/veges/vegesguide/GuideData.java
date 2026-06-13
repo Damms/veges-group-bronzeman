@@ -100,7 +100,7 @@ final class GuideData
 
 	private static String summary(String tagline, String s, String pros, String play, String pk)
 	{
-		return "<html><body style='width:195px'>"
+		return "<html><body style='width:176px'>"
 			+ "<i>" + tagline + "</i><br><br>"
 			+ "<b style='color:#c9a227'>SUMMARY</b><br>" + s + "<br><br>"
 			+ "<b style='color:#c9a227'>PROS</b><br>" + pros + "<br><br>"
@@ -314,7 +314,7 @@ final class GuideData
 	private static Build pivot()
 	{
 		return new Build("pivot", "Pivot Guide", false,
-			"<html><body style='width:195px'>"
+			"<html><body style='width:176px'>"
 				+ "<b style='color:#c9a227'>THE BUILD LADDER</b><br>"
 				+ "You can climb up but never back down - Defence only goes up.<br><br>"
 				+ "<b>1 Def Pure</b> ~ cb 40-75. Lowest bracket, glass cannon.<br>"
