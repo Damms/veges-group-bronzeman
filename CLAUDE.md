@@ -9,11 +9,15 @@ quest and skill state. Built from the runelite/example-plugin template.
 - Package: `com.veges.vegesguide` · config group: `vegesguide` · plugin name:
   "Veges PK Guide" · author: `Phob`.
 - GitHub: plugin repo `https://github.com/Damms/veges-group-bronzeman` (branch
-  `master`). Submitted to the Plugin Hub via the **open** PR
-  `https://github.com/runelite/plugin-hub/pull/12582` (manifest
-  `plugins/veges-pk-guide`, from fork branch `veges-pk-guide-update`). PR #12581
-  was the original and is now closed. To ship code changes: push to the plugin
-  repo, then bump `commit=` in the open plugin-hub PR (#12582) to the new hash.
+  `master`). Live in the Plugin Hub: PR
+  `https://github.com/runelite/plugin-hub/pull/12582` was **merged** 2026-06-13
+  (manifest `plugins/veges-pk-guide`). PR #12581 was the original (closed). To
+  ship code changes once a Hub PR is already merged, the manifest now lives on
+  `runelite/plugin-hub` master, so a **new** PR is needed each time: push to the
+  plugin repo, then sync the `Damms/plugin-hub` fork, branch off master, bump
+  `commit=` in `plugins/veges-pk-guide`, and open a fresh PR. Latest update PR:
+  `https://github.com/runelite/plugin-hub/pull/12585` (branch
+  `veges-pk-guide-collapse`).
 - Five builds: `pure`, `fortydef`, `zerker`, `med` are trackable checklists
   (checkboxes + progress bar + auto-tick); `pivot` is reference-only. Stable id
   prefixes per build: pure=`q`, zerker=`z`, fortydef=`f`, med=`m`.
