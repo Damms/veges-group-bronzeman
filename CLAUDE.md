@@ -1,1 +1,43 @@
 @AGENTS.md
+
+# Project context — Veges PK Guide
+
+A **read-only** RuneLite sidebar guide plugin for the Veges Group Bronzeman.
+It is NOT a gameplay automation plugin — it only reads the local player's own
+quest and skill state. Built from the runelite/example-plugin template.
+
+- Package: `com.veges.vegesguide` · config group: `vegesguide` · plugin name:
+  "Veges PK Guide" · author: `Phob`.
+- GitHub: plugin repo `https://github.com/Damms/veges-group-bronzeman` (branch
+  `master`). Submitted to the Plugin Hub via PR
+  `https://github.com/runelite/plugin-hub/pull/12581` (manifest
+  `plugins/veges-pk-guide`). To ship code changes: push to the plugin repo, then
+  bump `commit=` in that plugin-hub PR (same PR, new branch off upstream/master).
+
+## Files
+- `VegesGuidePlugin.java` — nav button + event wiring. Subscribes to
+  GameStateChanged / VarbitChanged / StatChanged / GameTick; a `syncPending`
+  flag throttles work to one scan per tick. Auto-ticks FINISHED quests (only
+  ever adds, never un-ticks) and snapshots real skill levels for the panel.
+- `VegesGuidePanel.java` — the Swing sidebar. Renders build summaries, the
+  quest checklist, progress bar, and the per-quest "Requires:" line (green=met,
+  red=unmet, grey=levels unknown). Reads/writes done-state via ConfigManager.
+- `GuideData.java` — **all guide content** lives here (the only file to edit for
+  content). Builds → Sections → Items. Items optionally carry a `Quest` (for
+  auto-tick) and `SkillReq`s (verified against the OSRS Wiki).
+- `VegesGuidePluginTest.java` — `main()` launches a dev client.
+
+## Gotchas
+- Saved checklist keys are `done.<buildKey>.<itemId>` (config group `vegesguide`).
+  The item ids in GuideData are stable save keys — **do not renumber existing
+  checkable ids** when editing content.
+- Quest enum quirks used here: Vampire Slayer = `VAMPYRE_SLAYER`, Romeo & Juliet
+  = `ROMEO__JULIET`, Desert Treasure I = `DESERT_TREASURE_I`. Skip `Skill.OVERALL`
+  (deprecated) and `Skill.SAILING` by name when iterating skills.
+- RFD has no "partial complete" state — the Mithril-gloves row only auto-ticks
+  on full RFD completion.
+- **Dev build/run**: gradle picks the Oracle JRE 8 (no compiler) by default and
+  fails. Run with the Corretto JDK: `gradlew.bat run
+  "-Dorg.gradle.java.home=C:\Users\Jaedyn\.jdks\corretto-23.0.2"`. IntelliJ runs
+  fine without the flag. The ReflectUtil InaccessibleObjectException at startup
+  is benign on JDK 23.
